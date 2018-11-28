@@ -1,10 +1,7 @@
+#include "tinymath.h"
+
 #ifndef HW2_TYPES_H
 #define HW2_TYPES_H
-
-typedef struct {
-    double x, y, z;
-    int colorId;
-} Vec3;
 
 typedef struct {
     double tx, ty, tz;
@@ -20,11 +17,11 @@ typedef struct {
 
 typedef struct {
     int cameraId;
-    Vec3 pos;
-    Vec3 gaze;
-    Vec3 v;
-    Vec3 u;
-    Vec3 w;
+    tinymath::vec3 pos;
+    tinymath::vec3 gaze;
+    tinymath::vec3 v;
+    tinymath::vec3 u;
+    tinymath::vec3 w;
     double l, r, b, t;
     double n;
     double f;

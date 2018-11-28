@@ -1,5 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
+
+#include "tinymath.h"
 #include "hw2_file_ops.h"
 #include "hw2_math_ops.h"
 
@@ -22,7 +24,7 @@ extern int numberOfRotations;
 extern Scaling scalings[1000];
 extern int numberOfScalings;
 
-extern Vec3 vertices[100000];
+extern tinymath::vec3 vertices[100000];
 extern int numberOfVertices;
 
 extern Color backgroundColor;
@@ -54,15 +56,15 @@ void readCameraFile(char *camFileName) {
         fscanf(fp, "%lf %lf %lf", &(cameras[i].gaze.x), &(cameras[i].gaze.y), &(cameras[i].gaze.z));
         fscanf(fp, "%lf %lf %lf", &(cameras[i].v.x), &(cameras[i].v.y), &(cameras[i].v.z));
 
-        cameras[i].gaze = normalizeVec3(cameras[i].gaze);
-        cameras[i].u = crossProductVec3(cameras[i].gaze, cameras[i].v);
-        cameras[i].u = normalizeVec3(cameras[i].u);
+        cameras[i].gaze = tinymath::normalize(cameras[i].gaze);
+        cameras[i].u = tinymath::cross(cameras[i].gaze, cameras[i].v);
+        cameras[i].u = tinymath::normalize(cameras[i].u);
 
         cameras[i].w.x = -cameras[i].gaze.x;
         cameras[i].w.y = -cameras[i].gaze.y;
         cameras[i].w.z = -cameras[i].gaze.z;
-        cameras[i].v = crossProductVec3(cameras[i].u, cameras[i].gaze);
-        cameras[i].v = normalizeVec3(cameras[i].v);
+        cameras[i].v = tinymath::cross(cameras[i].u, cameras[i].gaze);
+        cameras[i].v = tinymath::normalize(cameras[i].v);
 
 
         fscanf(fp, "%lf %lf %lf %lf", &(cameras[i].l), &(cameras[i].r), &(cameras[i].b), &(cameras[i].t));
