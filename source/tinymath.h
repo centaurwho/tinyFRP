@@ -1,9 +1,10 @@
+#include <vector>
+
 #ifndef TINYMATH_H
 #define TINYMATH_H
 
 namespace tinymath {
 
-//TODO: These classes are almost same. Consider either templates or inheritance
 
 class vec3 {
 
@@ -61,7 +62,19 @@ public:
 
 void printVec4(const vec4 & vec);
 
+class matrix {
 
+public:
+    int size;
+    std::vector<std::vector<double>> m;
+    
+    matrix(int size);
+    matrix(int size, std::vector<std::vector<double>> matrix);
+    //TODO: Implement matrix multlipication
+
+}; 
+
+matrix makeIdentity(matrix m);
 
 } // namespace tinymath
 

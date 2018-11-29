@@ -125,5 +125,31 @@ void printVec4(const vec4 & vec) {
     printf("(%lf,%lf,%lf,%lf)\n", vec.x, vec.y, vec.z, vec.t);
 }
 
+matrix::matrix(int size) {
+    for (int i=0; i<size; i++) {    
+        std::vector<double> temp;
+        for (int j=0; j<size; j++) {
+            temp.push_back(0);
+        }
+        m.push_back(temp);
+    }
+}
+
+matrix::matrix(int size, std::vector<std::vector<double>> matrix) {
+    for (int i=0; i<size; i++) {
+        for (int j=0; j<size; j++) {
+            m[i][j] = matrix[i][j];
+        }
+    }
+}
+
+matrix makeIdentity(matrix mat) {
+    for (int i = 0; i < mat.size; i++){
+        for (int j = 0; j < mat.size; j++) {
+            mat.m[i][j] = i==j ? 1.0 : 0.0;
+        }
+    }
+}
+
 } // namespace tinymath
 
