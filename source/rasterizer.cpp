@@ -5,7 +5,6 @@
 #include <iostream>
 
 #include "hw2_types.h"
-#include "hw2_math_ops.h"
 #include "hw2_file_ops.h"
 #include "tinymath.h"
 
@@ -56,21 +55,6 @@ void initializeImage(Camera cam) {
         }
 }
 
-/*
-	Transformations, culling, rasterization are done here.
-	You can define helper functions inside this file (rasterizer.cpp) only.
-	Using types in "hw2_types.h" and functions in "hw2_math_ops.cpp" will speed you up while working.
-*/
-tinymath::vec3 modellingTransform(const tinymath::vec3 &vertice) {
-
-    printVec3(vertice);
-    tinymath::vec4 vertice4d = tinymath::vec4(vertice);
-    printVec4(vertice4d);
-      
-
-    return vertice;
-}
-
 
 
 void forwardRenderingPipeline(Camera cam) {
@@ -80,7 +64,6 @@ void forwardRenderingPipeline(Camera cam) {
 
 int main(int argc, char **argv) {
     
-    tinymath::vec3 vertice = tinymath::vec3(-3,5,12);
-    modellingTransform(vertice);
+    test();
     return 0;
 }

@@ -1,7 +1,9 @@
 #include <vector>
+#define ABS(a) ((a)>0?(a):-1*(a))
 
 #ifndef TINYMATH_H
 #define TINYMATH_H
+
 
 namespace tinymath {
 
@@ -70,11 +72,13 @@ public:
     
     matrix(int size);
     matrix(int size, std::vector<std::vector<double>> matrix);
-    //TODO: Implement matrix multlipication
 
 }; 
 
 matrix makeIdentity(matrix m);
+matrix operator*(const matrix & lhs,const matrix & rhs);
+vec4 operator*(const vec4 & lhs, const vec4 & rhs);
+void printMatrix(const matrix & m);
 
 } // namespace tinymath
 

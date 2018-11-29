@@ -3,8 +3,6 @@
 
 #include "tinymath.h"
 #include "hw2_file_ops.h"
-#include "hw2_math_ops.h"
-
 
 extern Camera cameras[100];
 extern int numberOfCameras;

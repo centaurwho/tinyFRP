@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstdio>
+#include <iostream>
 
 namespace tinymath {
 
@@ -126,6 +127,8 @@ void printVec4(const vec4 & vec) {
 }
 
 matrix::matrix(int size) {
+    std::cout << size << std::endl;
+    this->size = size;
     for (int i=0; i<size; i++) {    
         std::vector<double> temp;
         for (int j=0; j<size; j++) {
@@ -151,5 +154,50 @@ matrix makeIdentity(matrix mat) {
     }
 }
 
-} // namespace tinymath
+matrix matrixMultMatrix(const matrix & lhs, const matrix & rhs) {
+    if (lhs.size != rhs.size)
+        std::cout << "Matrix sizes does not match" << std::endl;
+    int i, j, k;
+    int size = lhs.size;
+    
+    matrix res = matrix(size);
+    
+    for (i = 0; i < size; i++) {
+        for (j = 0; j < size; j++) {
+            for (k = 0; k < size; k++) {          
+                res.m[i][j] += res.m[i][k] * res.m[k][j];
+            }
+        }
+    }
+    return res;
+}
 
+vec4 matrixMultVec4(const matrix & lhs, const vec4 & rhs){
+    //if (lhs.size != 4)
+    //    std::err << "Matrix size does not match vector size" << std::endl;
+
+    //vec4 res;
+    //int i, j;
+    //double total;
+    //int size = this->size;
+    //for (i = 0; i < size ; i++) {
+    //    total = 0;
+    //    for (j = 0; j < size; j++)
+    //        total += this->m[i][j] * rhs[j];
+    //    res[i] = total;
+    //}
+}
+
+void printMatrix(const matrix & mat) {
+    std::cout << "Printing" << std::endl;
+    std::cout << mat.size << std::endl;
+    for (int i = 0; i < mat.size; i++) {
+        std::cout << "[";
+        for (int j = 0; j < mat.size; j++) {
+            std::cout << mat.m[i][j] << " ";
+        }
+        std::cout << "]" << std::endl;
+    }
+}
+
+}
