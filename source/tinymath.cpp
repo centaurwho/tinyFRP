@@ -1,8 +1,25 @@
 #include "tinymath.h"
 
-#include <cmath>
 #include <cstdio>
 #include <iostream>
+
+Translation::Translation(double tx, double ty, double tz)
+    :tx(tx), ty(ty), tz(tz) {}
+
+Translation::Translation(const tinymath::vec3 & vec)
+    :tx(vec.x), ty(vec.y), tz(vec.z) {}
+
+Scaling::Scaling(double sx, double sy, double sz)
+    :sx(sx), sy(sy), sz(sz) {}
+
+Scaling::Scaling(const tinymath::vec3 & vec)
+    :sx(vec.x), sy(vec.y), sz(vec.z) {}
+
+Rotation::Rotation(double angle, double ux, double uy, double uz)
+    :angle(angle), ux(ux), uy(uy), uz(uz) {}
+
+Rotation::Rotation(const tinymath::vec3 & vec)
+    :ux(vec.x), uy(vec.y), uz(vec.z) {}
 
 namespace tinymath {
 
@@ -127,70 +144,171 @@ void printVec4(const vec4 & vec) {
 }
 
 matrix::matrix(int size) {
-    std::cout << size << std::endl;
     this->size = size;
     for (int i=0; i<size; i++) {    
         std::vector<double> temp;
         for (int j=0; j<size; j++) {
-            temp.push_back(0);
+            temp.push_back(0.0);
         }
         m.push_back(temp);
     }
+    m[size-1][size-1] = 1.0;
 }
 
-matrix::matrix(int size, std::vector<std::vector<double>> matrix) {
+matrix::matrix(int size, std::vector<std::vector<double>> mat) {
     for (int i=0; i<size; i++) {
         for (int j=0; j<size; j++) {
-            m[i][j] = matrix[i][j];
+            m[i][j] = mat[i][j];
         }
     }
 }
 
-matrix makeIdentity(matrix mat) {
+matrix & makeTranspose(matrix & mat) {
+    for (int i = 0; i < mat.size; i++) {
+        for (int j=0; j < i; j++) {
+            double temp = mat.m[i][j];
+            mat.m[i][j] = mat.m[j][i];
+            mat.m[j][i] = temp;
+        }
+    } 
+    return mat;
+}
+
+
+matrix & makeIdentity(matrix & mat) {
     for (int i = 0; i < mat.size; i++){
         for (int j = 0; j < mat.size; j++) {
             mat.m[i][j] = i==j ? 1.0 : 0.0;
         }
     }
+
+    return mat;
 }
 
-matrix matrixMultMatrix(const matrix & lhs, const matrix & rhs) {
-    if (lhs.size != rhs.size)
+
+matrix getTranslationMatrix(const Translation & translation) {
+
+    matrix mat = matrix();
+    makeIdentity(mat);
+
+    mat.m[0][3] = translation.tx;
+    mat.m[1][3] = translation.ty;
+    mat.m[2][3] = translation.tz;
+
+    return mat; 
+}
+
+
+matrix getRotationMatrixAroundX(double angle) {
+    
+    matrix mat = matrix();
+
+    mat.m[1][1] = cos(RADIANS(angle));
+    mat.m[1][2] = -sin(RADIANS(angle));
+    mat.m[2][1] = sin(RADIANS(angle));
+    mat.m[2][2] = cos(RADIANS(angle));
+
+    return mat; 
+}
+
+matrix rotateAroundArbitraryAxis(const Rotation & rotation) {
+    
+    //TODO: This code is messy. Remove redundant stuff
+    Translation tOrig = Translation(vec3(-rotation.ux, -rotation.uy, -rotation.uz));
+    matrix translationToOrigin = getTranslationMatrix(tOrig);
+
+    vec3 u = vec3(rotation.ux, rotation.uy, rotation.uz); //u is also rotation axis
+    Translation tPoint = Translation(vec3(u));
+    matrix translationToPoint = getTranslationMatrix(tPoint);
+
+    normalize(u);
+    printVec3(u);
+
+    vec3 v = vec3(-u.y, u.x, 0);
+    vec3 w = vec3(cross(u,v));
+    normalize(v);
+    normalize(w);
+    
+    matrix rotateAroundX = getRotationMatrixAroundX(rotation.angle);
+    
+    matrix m = getMRotation(u,v,w);
+    matrix mTranspose = matrix(makeTranspose(m));
+
+    //TODO: Handle this mess
+    matrix res1 = matrix(matrixMultMatrix(translationToPoint,mTranspose));
+    matrix res2 = matrix(matrixMultMatrix(res1,rotateAroundX));
+    matrix res3 = matrix(matrixMultMatrix(res2,m));
+    matrix res4 = matrix(matrixMultMatrix(res3,translationToOrigin));
+    
+    return res4;
+}
+
+matrix getMRotation(const vec3 & u, const vec3 & v, const vec3 & w) {
+    matrix mat = matrix();
+
+    mat.m[0][0] = u.x;
+    mat.m[0][1] = u.y;
+    mat.m[0][2] = u.z;
+    mat.m[1][0] = v.x;
+    mat.m[1][1] = v.y;
+    mat.m[1][2] = v.z;
+    mat.m[2][0] = w.x;
+    mat.m[2][1] = w.y;
+    mat.m[2][2] = w.z;
+
+    return mat;
+}
+
+matrix getScalingMatrix(const Scaling & scaling) {
+      
+    matrix mat = matrix();
+
+    mat.m[0][0] = scaling.sx;
+    mat.m[1][1] = scaling.sy;
+    mat.m[2][2] = scaling.sz;
+
+    return mat;
+}
+
+matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2) {
+    if (mat1.size != mat2.size)
         std::cout << "Matrix sizes does not match" << std::endl;
     int i, j, k;
-    int size = lhs.size;
+    double total;
     
+    int size = mat1.size;
     matrix res = matrix(size);
-    
+
     for (i = 0; i < size; i++) {
         for (j = 0; j < size; j++) {
+            total = 0;
             for (k = 0; k < size; k++) {          
-                res.m[i][j] += res.m[i][k] * res.m[k][j];
+                total += mat1.m[i][k] * mat2.m[k][j];
             }
+            res.m[i][j] = total;
         }
     }
     return res;
 }
 
-vec4 matrixMultVec4(const matrix & lhs, const vec4 & rhs){
-    //if (lhs.size != 4)
-    //    std::err << "Matrix size does not match vector size" << std::endl;
-
-    //vec4 res;
-    //int i, j;
-    //double total;
-    //int size = this->size;
-    //for (i = 0; i < size ; i++) {
-    //    total = 0;
-    //    for (j = 0; j < size; j++)
-    //        total += this->m[i][j] * rhs[j];
-    //    res[i] = total;
-    //}
+vec4 & vec4::operator*=(const matrix & mat){
+//    if (lhs.size != 4)
+//        std::err << "Matrix size does not match vector size" << std::endl;
+//
+//    vec4 res;
+//    int i, j;
+//    double total;
+//    int size = this->size;
+//    for (i = 0; i < size ; i++) {
+//        total = 0;
+//        for (j = 0; j < size; j++)
+//            total += this->m[i][j] * rhs[j];
+//        res[i] = total;
+//    }
+    return *this;
 }
 
 void printMatrix(const matrix & mat) {
-    std::cout << "Printing" << std::endl;
-    std::cout << mat.size << std::endl;
     for (int i = 0; i < mat.size; i++) {
         std::cout << "[";
         for (int j = 0; j < mat.size; j++) {
@@ -198,6 +316,7 @@ void printMatrix(const matrix & mat) {
         }
         std::cout << "]" << std::endl;
     }
+    std::cout << std::endl;
 }
 
 }

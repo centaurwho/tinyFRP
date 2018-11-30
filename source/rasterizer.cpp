@@ -51,7 +51,6 @@ void initializeImage(Camera cam) {
             image[i][j].r = backgroundColor.r;
             image[i][j].g = backgroundColor.g;
             image[i][j].b = backgroundColor.b;
-
         }
 }
 
@@ -61,9 +60,7 @@ void forwardRenderingPipeline(Camera cam) {
     // TODO: IMPLEMENT HERE
 }
 
-
 int main(int argc, char **argv) {
     
-    test();
     return 0;
 }

@@ -1,8 +1,42 @@
 #include <vector>
-#define ABS(a) ((a)>0?(a):-1*(a))
+#include <cmath>
 
+#define ABS(a) ((a)>0?(a):-1*(a))
+#define RADIANS(a) (a*M_PI/180)
 #ifndef TINYMATH_H
 #define TINYMATH_H
+
+namespace tinymath {
+    class vec3;
+}
+
+
+//TODO: Make below classes compatible with vec3 type 
+
+class Translation{
+public:
+    double tx, ty, tz;
+    
+    Translation() :tx(0),ty(0),tz(0) {}
+    Translation(double tx, double ty, double tz);
+    Translation(const tinymath::vec3 & vec);
+} ;
+
+class Rotation {
+public:
+    double angle, ux, uy, uz;
+    Rotation() :angle(0),ux(0),uy(0),uz(0) {}
+    Rotation(double angle, double ux, double uy, double uz);
+    Rotation(const tinymath::vec3 & vec);
+};
+
+class Scaling {
+public:
+    double sx, sy, sz;
+    Scaling() :sx(0),sy(0),sz(0) {}
+    Scaling(double sx, double sy, double sz);
+    Scaling(const tinymath::vec3 & vec);
+};
 
 
 namespace tinymath {
@@ -48,6 +82,29 @@ double dot(const vec3 & lhs, const vec3 & rhs);
 vec3 cross(const vec3 & lhs, const vec3 & rhs);
 void printVec3(const vec3 & vec);
 
+class matrix {
+
+public:
+    int size;
+    std::vector<std::vector<double>> m;
+    
+    matrix(int size = 4);
+    matrix(int size, std::vector<std::vector<double>> matrix);
+    
+}; 
+
+matrix & makeIdentity(matrix & m); //This could be a method?
+matrix & makeTranspose(matrix & m);
+
+matrix getTranslationMatrix(const Translation & translation);
+matrix getRotationMatrixAroundX(double angle);
+matrix rotateAroundArbitraryAxis(const Rotation & rotation);
+matrix getScalingMatrix(const Scaling & scaling);
+matrix getMRotation(const vec3 & u, const vec3 & v, const vec3 & z);
+
+matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2);
+void printMatrix(const matrix & m);
+
 class vec4 {
 
 public:
@@ -60,25 +117,12 @@ public:
     explicit vec4(const vec3 &);  
     vec4(const vec4 &) = default;
     vec4 & operator=(const vec4 &) = default;
+
+    vec4 & operator*=(const matrix & mat);
+    friend vec4 operator*(vec4 lhs, const matrix & mat);
 };
 
 void printVec4(const vec4 & vec);
-
-class matrix {
-
-public:
-    int size;
-    std::vector<std::vector<double>> m;
-    
-    matrix(int size);
-    matrix(int size, std::vector<std::vector<double>> matrix);
-
-}; 
-
-matrix makeIdentity(matrix m);
-matrix operator*(const matrix & lhs,const matrix & rhs);
-vec4 operator*(const vec4 & lhs, const vec4 & rhs);
-void printMatrix(const matrix & m);
 
 } // namespace tinymath
 

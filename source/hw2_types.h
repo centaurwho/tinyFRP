@@ -4,18 +4,6 @@
 #define HW2_TYPES_H
 
 typedef struct {
-    double tx, ty, tz;
-} Translation;
-
-typedef struct {
-    double angle, ux, uy, uz;
-} Rotation;
-
-typedef struct {
-    double sx, sy, sz;
-} Scaling;
-
-typedef struct {
     int cameraId;
     tinymath::vec3 pos;
     tinymath::vec3 gaze;
