@@ -13,8 +13,6 @@ namespace tinymath {
 }
 
 
-//TODO: Make below classes compatible with vec3 type 
-
 class Translation{
 public:
     double tx, ty, tz;
