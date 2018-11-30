@@ -26,6 +26,9 @@ namespace tinymath {
 vec3::vec3(double x, double y, double z, int colorId)
     : x(x), y(y), z(z), colorId(colorId) { }
 
+vec3::vec3(const vec4 & vec)
+    : x(vec.x),y(vec.y),z(vec.z) {}
+
 vec3 & vec3::operator+=(const vec3 & rhs) {
     x += rhs.x;
     y += rhs.y;
@@ -137,6 +140,20 @@ vec4::vec4(double x, double y, double z, double t)
 
 vec4::vec4(const vec3 & vertice)
     : x(vertice.x), y(vertice.y), z(vertice.z), t(1) { }
+    
+double & vec4::operator[](const int index){
+
+    switch (index) {
+        case 0:
+            return this->x;
+        case 1:
+            return this->y;
+        case 2:
+            return this->z;
+        default:
+            return this->t;
+    }
+}
 
 
 void printVec4(const vec4 & vec) {
@@ -273,16 +290,15 @@ matrix getScalingMatrix(const Scaling & scaling) {
 matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2) {
     if (mat1.size != mat2.size)
         std::cout << "Matrix sizes does not match" << std::endl;
-    int i, j, k;
     double total;
     
     int size = mat1.size;
     matrix res = matrix(size);
 
-    for (i = 0; i < size; i++) {
-        for (j = 0; j < size; j++) {
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
             total = 0;
-            for (k = 0; k < size; k++) {          
+            for (int k = 0; k < size; k++) {          
                 total += mat1.m[i][k] * mat2.m[k][j];
             }
             res.m[i][j] = total;
@@ -291,21 +307,21 @@ matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2) {
     return res;
 }
 
-vec4 & vec4::operator*=(const matrix & mat){
-//    if (lhs.size != 4)
-//        std::err << "Matrix size does not match vector size" << std::endl;
-//
-//    vec4 res;
-//    int i, j;
-//    double total;
-//    int size = this->size;
-//    for (i = 0; i < size ; i++) {
-//        total = 0;
-//        for (j = 0; j < size; j++)
-//            total += this->m[i][j] * rhs[j];
-//        res[i] = total;
-//    }
-    return *this;
+vec4 matrixMultVec4(vec4 & vec, const matrix & mat){
+    if (mat.size != 4){
+        std::cout << "Matrix size does not match vector size" << std::endl;
+    }
+
+    vec4 res;
+    double total;
+    int size = 4;
+    for (int i = 0; i < size ; i++) {
+        res[i] = 0;
+        for (int j = 0; j < size; j++) {
+            res[i] += mat.m[i][j]*vec[j]; 
+        }
+    }
+    return res;
 }
 
 void printMatrix(const matrix & mat) {

@@ -55,12 +55,74 @@ void initializeImage(Camera cam) {
 }
 
 
+void modellingTransform(Camera cam, int modelId) { 
+    //TODO
+}
+
+
+void cameraTransform(Camera cam) {
+    tinymath::vec3 u = cam.u;
+    tinymath::vec3 v = cam.v;
+    tinymath::vec3 w = cam.w;
+
+    
+    tinymath::matrix camRotation = tinymath::getMRotation(u,v,w);
+    tinymath::matrix camTranslate = tinymath::getTranslationMatrix((-1)*cam.pos);
+
+    tinymath::matrix camMatrix = tinymath::matrixMultMatrix(camRotation,camTranslate);
+
+    tinymath::vec4 camPos4d = tinymath::vec4(cam.pos);
+    
+    //TODO: Handle colorid. Do we add it into vec4?
+    int colorId = cam.pos.colorId;
+    
+    tinymath::vec4 newPos = tinymath::matrixMultVec4(camPos4d,camMatrix); //newPos vec3 or vec4
+    cam.pos = tinymath::vec3(newPos);
+    cam.pos.colorId = colorId;
+
+}
+
+void perspectiveTransform(Camera cam, int modelId) { //map to CVV
+    tinymath::matrix perspectiveMatrix;
+
+    double n = cam.n;
+    double f = cam.f;
+    double l = cam.l;
+    double r = cam.r;
+    double b = cam.b;
+    double t = cam.t;
+    double rminusl = r-l;
+    double tminusb = t-b;
+    double fminusn = f-n;
+
+    perspectiveMatrix[0][0] = (2*n)/rminusl;
+    perspectiveMatrix[0][2] = (r+l)/rminusl;
+    perspectiveMatrix[1][1] = (2*n)/tminusb;
+    perspectiveMatrix[1][2] = (t+b)/tminusb;
+    perspectiveMatrix[2][2] = -(f+n)/fminusn;
+    perspectiveMatrix[2][3] = (-2*f*n)/fminusn;
+    perspectiveMatrix[3][2] = -1.0;
+    perspectiveMatrix[3][3] = 0.0;
+
+    
+    //return 
+}
+
+void viewportTransform(Camera cam, int modelId) { //map to 2d
+    //TODO
+    tinymath::matrix vpMatrix();
+
+}
 
 void forwardRenderingPipeline(Camera cam) {
-    // TODO: IMPLEMENT HERE
+    modellingTransform(cam,0);
+
 }
 
 int main(int argc, char **argv) {
-    
+    //tinymath::vec4 vec = tinymath::vec4(1,2,3,4);
+    //tinymath::matrix mat = tinymath::getTranslationMatrix(Translation(1,2,3));
+
+    //tinymath::printVec4(tinymath::matrixMultVec4(vec, mat));
     return 0;
 }

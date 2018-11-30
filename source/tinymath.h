@@ -8,6 +8,8 @@
 
 namespace tinymath {
     class vec3;
+    class matrix;
+    class vec4;
 }
 
 
@@ -51,7 +53,8 @@ public:
     
     int colorId;
 
-    explicit vec3(double x = 0, double y = 0, double z = 0, int colorId = -1);    
+    explicit vec3(double x = 0, double y = 0, double z = 0, int colorId = -1);
+    vec3(const vec4 &);
     vec3(const vec3 &) = default;
     vec3 & operator=(const vec3 &) = default;
 
@@ -117,11 +120,10 @@ public:
     explicit vec4(const vec3 &);  
     vec4(const vec4 &) = default;
     vec4 & operator=(const vec4 &) = default;
+    double & operator[](const int index);
 
-    vec4 & operator*=(const matrix & mat);
-    friend vec4 operator*(vec4 lhs, const matrix & mat);
 };
-
+vec4 matrixMultVec4(vec4 & vec, const matrix & mat);
 void printVec4(const vec4 & vec);
 
 } // namespace tinymath
