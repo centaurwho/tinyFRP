@@ -27,7 +27,7 @@ vec3::vec3(double x, double y, double z, int colorId)
     : x(x), y(y), z(z), colorId(colorId) { }
 
 vec3::vec3(const vec4 & vec)
-    : x(vec.x),y(vec.y),z(vec.z) {}
+    : x(vec.x),y(vec.y),z(vec.z),colorId(vec.colorId) {}
 
 vec3 & vec3::operator+=(const vec3 & rhs) {
     x += rhs.x;
@@ -139,7 +139,7 @@ vec4::vec4(double x, double y, double z, double t)
     : x(x), y(y), z(z), t(t) { }
 
 vec4::vec4(const vec3 & vertice)
-    : x(vertice.x), y(vertice.y), z(vertice.z), t(1) { }
+    : x(vertice.x), y(vertice.y), z(vertice.z), t(1), colorId(vertice.colorId) { }
     
 double & vec4::operator[](const int index){
 
@@ -239,7 +239,6 @@ matrix rotateAroundArbitraryAxis(const Rotation & rotation) {
     matrix translationToPoint = getTranslationMatrix(tPoint);
 
     normalize(u);
-    printVec3(u);
 
     vec3 v = vec3(-u.y, u.x, 0);
     vec3 w = vec3(cross(u,v));

@@ -2,8 +2,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <iterator>
-#include <algorithm>
 
 
 #include "hw2_types.h"
@@ -11,26 +9,28 @@
 #include "tinymath.h"
 
 
+#define DEBUG 1
+
 Camera cameras[100];
-int numberOfCameras;
+int numberOfCameras = 0;
 
 Model models[1000];
-int numberOfModels;
+int numberOfModels = 0;
 
 Color colors[100000];
-int numberOfColors;
+int numberOfColors = 0;
 
 Translation translations[1000];
-int numberOfTranslations;
+int numberOfTranslations = 0;
 
 Rotation rotations[1000];
-int numberOfRotations;
+int numberOfRotations = 0;
 
 Scaling scalings[1000];
-int numberOfScalings;
+int numberOfScalings = 0;
 
 tinymath::vec3 vertices[100000];
-int numberOfVertices;
+int numberOfVertices = 0;
 
 Color backgroundColor;
 
@@ -55,6 +55,21 @@ void initializeImage(Camera cam) {
         }
 }
 
+tinymath::vec3 calculateNormal(Triangle & triangle) {
+
+    tinymath::vec3 normal;
+    
+    tinymath::vec3 vertexA = vertices[triangle.vertexIds[0]];
+    tinymath::vec3 vertexB = vertices[triangle.vertexIds[1]];
+    tinymath::vec3 vertexC = vertices[triangle.vertexIds[2]];
+
+    tinymath::vec3 edgeBC = vertexC - vertexB;
+    tinymath::vec3 edgeBA = vertexA - vertexB;
+
+    normal = tinymath::normalize(tinymath::cross(edgeBC, edgeBA));
+    return normal;
+}
+
 
 void modellingTransform() { 
     std::vector<tinymath::vec3> transModels;
@@ -63,20 +78,10 @@ void modellingTransform() {
         
         Model currModel = models[i];
         
-        std::vector<int> modelVertices;
         
-        //Find vertice ids used in the model. store them
-        for (auto & triangle : currModel.triangles) {
-            for (const auto vertexId : triangle.vertexIds) {
-                
-                if (std::find(modelVertices.begin(),modelVertices.end(),vertexId) == modelVertices.end()) {
-                    modelVertices.push_back(vertexId);
-                }
-            } 
-        }
 
         //model transform coordinates
-        for (auto vertexId: modelVertices) {
+        for (auto vertexId: currModel.usedVertices) {
             for (int j= 0; j < currModel.numberOfTransformations; j++) {
                 
                 char tType = currModel.transformationTypes[j];
@@ -97,8 +102,11 @@ void modellingTransform() {
                     transformMatrix = tinymath::rotateAroundArbitraryAxis(r);
                 }
                 
+                //TODO: Below part looks dirty. Add colorId field to vec4 maybe
+                int colorId = vertices[vertexId].colorId;
                 tinymath::vec4 vec = tinymath::vec4(vertices[vertexId]);
                 vertices[vertexId] = tinymath::vec3(matrixMultVec4(vec, transformMatrix));
+                vertices[vertexId].colorId = colorId;
             }
         }
     }
@@ -120,8 +128,10 @@ void cameraTransform(Camera & cam) {
 
 
     for (int i=0; i < numberOfVertices; i++) {
+        int colorId = vertices[i].colorId;
         tinymath::vec4 vec = tinymath::vec4(vertices[i]);
         vertices[i] = tinymath::vec3(tinymath::matrixMultVec4(vec, cameraMatrix));
+        vertices[i].colorId = colorId;
     } 
    
     tinymath::vec4 cVec = tinymath::vec4(cam.pos);
@@ -152,10 +162,12 @@ void perspectiveTransform(Camera cam) { //map to CVV
     perspectiveMatrix.m[3][3] = 0.0;
 
     for (int i=0; i < numberOfVertices; i++) {
+        int colorId = vertices[i].colorId;
         tinymath::vec4 vec = tinymath::vec4(vertices[i]);
         tinymath::vec4 res = tinymath::matrixMultVec4(vec, perspectiveMatrix);
         double t = res.t;
         vertices[i] = tinymath::vec3(res)/= t;
+        vertices[i].colorId = colorId;
     } 
 }
 
@@ -172,6 +184,25 @@ void viewportTransform(Camera cam) { //map to 2d
     viewportMatrix.m[2][2] = 0.5;
     viewportMatrix.m[2][3] = 0.5;
 
+    for (int i = 0; i < numberOfModels; i++) {
+
+        Model currModel = models[i];
+        for (auto triangle: currModel.triangles) {
+
+            if (backfaceCullingSetting == 0 || dot(calculateNormal(triangle), vertices[triangle.vertexIds[0]]) < 0) { 
+            
+                for (auto vertexId : triangle.vertexIds) {
+                    
+                    tinymath::vec4 v = tinymath::vec4(vertices[vertexId-1]);
+                    tinymath::vec4 vec = matrixMultVec4(v, viewportMatrix);
+                    tinymath::vec3 res = tinymath::vec3(vec);
+                    int x = (int) (res.x + 0.5); 
+                    int y = (int) (res.y + 0.5); 
+                    image[x][y] = colors[vertices[vertexId].colorId-1];
+                }
+            }
+        }
+    } 
 
 }
 
@@ -185,6 +216,33 @@ void forwardRenderingPipeline(Camera cam) {
     rasterize(); //NOT IMPLEMENTED
 }
 
+//print model function for debug
+
+void printModel(Model model) {
+    std::cout << "---------" << std::endl;
+    std::cout << "modelId: " << model.modelId << std::endl;
+    std::cout << "type: " << model.type << std::endl;
+    
+    std::cout << "numberOfTransformations: " << model.numberOfTransformations << std::endl;
+    for (int i = 0; i < model.numberOfTransformations; i++) {
+        std::cout << "Transformation " << model.transformationIDs[i] << "has type " << model.transformationTypes[i] << std::endl; 
+    }
+    
+    std::cout << "Number of Triangles: " << model.numberOfTriangles << std::endl;
+    for (int i = 0; i< model.numberOfTriangles; i++){
+        tinymath::printVec3(vertices[model.triangles[i].vertexIds[0]]);
+        tinymath::printVec3(vertices[model.triangles[i].vertexIds[1]]);
+        tinymath::printVec3(vertices[model.triangles[i].vertexIds[2]]);
+    }
+
+    for (auto v: model.usedVertices) {
+        std::cout << v << " ";
+    }
+ 
+    std::cout << std::endl << "---------" << std::endl;
+}
+
+
 int main(int argc, char **argv) {
 
     if (argc < 2) {
@@ -196,7 +254,13 @@ int main(int argc, char **argv) {
     readCameraFile(argv[2]);
 
     image = 0;
-    
+
+    if (DEBUG == 1) {
+        printModel(models[0]);                    
+    }
+
+
+
     for (int i = 0; i < numberOfCameras; i++) {
         Camera currentCam = cameras[i];
         

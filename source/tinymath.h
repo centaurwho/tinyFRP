@@ -114,6 +114,8 @@ public:
     double z;
     double t;
 
+    int colorId;
+
     explicit vec4(double x = 0, double y = 0, double z = 0, double t = 1);  
     explicit vec4(const vec3 &);  
     vec4(const vec4 &) = default;

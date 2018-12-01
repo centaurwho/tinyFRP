@@ -178,6 +178,17 @@ void readSceneFile(char *sceneFileName) {
             fscanf(fp, "%d %d %d", &(models[i].triangles[j].vertexIds[0]), &(models[i].triangles[j].vertexIds[1]),
                    &(models[i].triangles[j].vertexIds[2]));
         }
+
+        //Find vertice ids used in the model. store them
+        for (auto & triangle : models[i].triangles) {
+            for (const auto vertexId : triangle.vertexIds) {
+                
+                if (std::find(models[i].usedVertices.begin(),models[i].usedVertices.end(),vertexId) == models[i].usedVertices.end()) {
+                    models[i].usedVertices.push_back(vertexId);
+                }
+            } 
+        }
+
     }
 
     fclose(fp);

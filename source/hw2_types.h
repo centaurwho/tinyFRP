@@ -34,6 +34,8 @@ typedef struct {
     char transformationTypes[1000];
     int numberOfTriangles;
     Triangle triangles[25000];
+
+    std::vector<int> usedVertices;
 } Model;
 
 #endif //HW2_TYPES_H

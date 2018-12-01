@@ -1,3 +1,6 @@
+#include <iterator>
+#include <algorithm>
+
 #include "hw2_types.h"
 
 #ifndef HW2_FILE_OPS_H
