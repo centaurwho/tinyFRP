@@ -26,9 +26,6 @@ namespace tinymath {
 vec3::vec3(double x, double y, double z, int colorId)
     : x(x), y(y), z(z), colorId(colorId) { }
 
-vec3::vec3(const vec4 & vec)
-    : x(vec.x),y(vec.y),z(vec.z),colorId(vec.colorId) {}
-
 vec3 & vec3::operator+=(const vec3 & rhs) {
     x += rhs.x;
     y += rhs.y;
@@ -133,76 +130,6 @@ void printVec3(const vec3 & vec) {
     printf("(%lf,%lf,%lf)\n", vec.x, vec.y, vec.z);
 }
 
-//vec4 below
-
-vec4::vec4(double x, double y, double z, double t)
-    : x(x), y(y), z(z), t(t) { }
-
-vec4::vec4(const vec3 & vertice)
-    : x(vertice.x), y(vertice.y), z(vertice.z), t(1), colorId(vertice.colorId) { }
-    
-double & vec4::operator[](const int index){
-
-    switch (index) {
-        case 0:
-            return this->x;
-        case 1:
-            return this->y;
-        case 2:
-            return this->z;
-        default:
-            return this->t;
-    }
-}
-
-
-void printVec4(const vec4 & vec) {
-    printf("(%lf,%lf,%lf,%lf)\n", vec.x, vec.y, vec.z, vec.t);
-}
-
-matrix::matrix(int size) {
-    this->size = size;
-    for (int i=0; i<size; i++) {    
-        std::vector<double> temp;
-        for (int j=0; j<size; j++) {
-            temp.push_back(0.0);
-        }
-        m.push_back(temp);
-    }
-    m[size-1][size-1] = 1.0;
-}
-
-matrix::matrix(int size, std::vector<std::vector<double>> mat) {
-    for (int i=0; i<size; i++) {
-        for (int j=0; j<size; j++) {
-            m[i][j] = mat[i][j];
-        }
-    }
-}
-
-matrix & makeTranspose(matrix & mat) {
-    for (int i = 0; i < mat.size; i++) {
-        for (int j=0; j < i; j++) {
-            double temp = mat.m[i][j];
-            mat.m[i][j] = mat.m[j][i];
-            mat.m[j][i] = temp;
-        }
-    } 
-    return mat;
-}
-
-
-matrix & makeIdentity(matrix & mat) {
-    for (int i = 0; i < mat.size; i++){
-        for (int j = 0; j < mat.size; j++) {
-            mat.m[i][j] = i==j ? 1.0 : 0.0;
-        }
-    }
-
-    return mat;
-}
-
-
 void translate(vec3 & vec, const Translation & translation) {
     vec.x += translation.tx;
     vec.y += translation.ty;
@@ -237,52 +164,4 @@ void scale(vec3 & vec, const Scaling & scaling) {
     vec.y *= scaling.sy;
     vec.z *= scaling.sz;
 }
-
-matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2) {
-    if (mat1.size != mat2.size)
-        std::cout << "Matrix sizes does not match" << std::endl;
-    double total;
-    
-    int size = mat1.size;
-    matrix res = matrix(size);
-
-    for (int i = 0; i < size; i++) {
-        for (int j = 0; j < size; j++) {
-            total = 0;
-            for (int k = 0; k < size; k++) {          
-                total += mat1.m[i][k] * mat2.m[k][j];
-            }
-            res.m[i][j] = total;
-        }
-    }
-    return res;
-}
-
-vec4 matrixMultVec4(vec4 & vec, const matrix & mat){
-    if (mat.size != 4){
-        std::cout << "Matrix size does not match vector size" << std::endl;
-    }
-
-    vec4 res;
-    int size = 4;
-    for (int i = 0; i < size ; i++) {
-        res[i] = 0;
-        for (int j = 0; j < size; j++) {
-            res[i] += mat.m[i][j]*vec[j]; 
-        }
-    }
-    return res;
-}
-
-void printMatrix(const matrix & mat) {
-    for (int i = 0; i < mat.size; i++) {
-        std::cout << "[";
-        for (int j = 0; j < mat.size; j++) {
-            std::cout << mat.m[i][j] << " ";
-        }
-        std::cout << "]" << std::endl;
-    }
-    std::cout << std::endl;
-}
-
 }

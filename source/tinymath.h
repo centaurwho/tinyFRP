@@ -8,8 +8,6 @@
 
 namespace tinymath {
     class vec3;
-    class matrix;
-    class vec4;
 }
 
 
@@ -52,7 +50,6 @@ public:
     int colorId;
 
     explicit vec3(double x = 0, double y = 0, double z = 0, int colorId = -1);
-    vec3(const vec4 &);
     vec3(const vec3 &) = default;
     vec3 & operator=(const vec3 &) = default;
 
@@ -83,46 +80,10 @@ double dot(const vec3 & lhs, const vec3 & rhs);
 vec3 cross(const vec3 & lhs, const vec3 & rhs);
 void printVec3(const vec3 & vec);
 
-class matrix {
-
-public:
-    int size;
-    std::vector<std::vector<double>> m;
-    
-    matrix(int size = 4);
-    matrix(int size, std::vector<std::vector<double>> matrix);
-    
-}; 
-
-matrix & makeIdentity(matrix & m); //This could be a method?
-matrix & makeTranspose(matrix & m);
-
-void translate(vec3 &, const Translation &);
-void rotate(vec3 &, const Rotation &);
+void translate(vec3 &, const Translation & );
+void rotate(vec3 &, const Rotation & );
 void scale(vec3 &, const Scaling & );
 
-matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2);
-void printMatrix(const matrix & m);
-
-class vec4 {
-
-public:
-    double x;
-    double y;
-    double z;
-    double t;
-
-    int colorId;
-
-    explicit vec4(double x = 0, double y = 0, double z = 0, double t = 1);  
-    explicit vec4(const vec3 &);  
-    vec4(const vec4 &) = default;
-    vec4 & operator=(const vec4 &) = default;
-    double & operator[](const int index);
-
-};
-vec4 matrixMultVec4(vec4 & vec, const matrix & mat);
-void printVec4(const vec4 & vec);
 
 } // namespace tinymath
 
