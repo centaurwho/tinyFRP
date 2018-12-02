@@ -97,11 +97,9 @@ public:
 matrix & makeIdentity(matrix & m); //This could be a method?
 matrix & makeTranspose(matrix & m);
 
-matrix getTranslationMatrix(const Translation & translation);
-matrix getRotationMatrixAroundX(double angle);
-matrix rotateAroundArbitraryAxis(const Rotation & rotation);
-matrix getScalingMatrix(const Scaling & scaling);
-matrix getMRotation(const vec3 & u, const vec3 & v, const vec3 & z);
+void translate(vec3 &, const Translation &);
+void rotate(vec3 &, const Rotation &);
+void scale(vec3 &, const Scaling & );
 
 matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2);
 void printMatrix(const matrix & m);

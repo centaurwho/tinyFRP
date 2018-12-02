@@ -203,87 +203,39 @@ matrix & makeIdentity(matrix & mat) {
 }
 
 
-matrix getTranslationMatrix(const Translation & translation) {
-
-    matrix mat = matrix();
-    makeIdentity(mat);
-
-    mat.m[0][3] = translation.tx;
-    mat.m[1][3] = translation.ty;
-    mat.m[2][3] = translation.tz;
-
-    return mat; 
+void translate(vec3 & vec, const Translation & translation) {
+    vec.x += translation.tx;
+    vec.y += translation.ty;
+    vec.z += translation.tz;
 }
 
+void rotate(vec3 & vec, const Rotation & rotation) {
 
-matrix getRotationMatrixAroundX(double angle) {
-    
-    matrix mat = matrix();
+    double u = rotation.ux;
+    double v = rotation.uy;
+    double w = rotation.uz;
 
-    mat.m[1][1] = cos(RADIANS(angle));
-    mat.m[1][2] = -sin(RADIANS(angle));
-    mat.m[2][1] = sin(RADIANS(angle));
-    mat.m[2][2] = cos(RADIANS(angle));
+    double x = vec.x;
+    double y = vec.y;
+    double z = vec.z;
 
-    return mat; 
+    double cosT = cos(RADIANS(rotation.angle));
+    double minusCos = 1 - cosT; 
+    double sinT = sin(RADIANS(rotation.angle));
+
+    double rep = (u*x+v*y+w*z)*minusCos;
+
+    vec.x = u*rep + x*cosT + (-w*y + v*z)*sinT;
+    vec.y = v*rep + y*cosT + (-w*x - u*z)*sinT;
+    vec.z = w*rep + z*cosT + (-v*x + u*y)*sinT;
+
 }
 
-matrix rotateAroundArbitraryAxis(const Rotation & rotation) {
-    
-    //TODO: This code is messy. Remove redundant stuff
-    Translation tOrig = Translation(vec3(-rotation.ux, -rotation.uy, -rotation.uz));
-    matrix translationToOrigin = getTranslationMatrix(tOrig);
-
-    vec3 u = vec3(rotation.ux, rotation.uy, rotation.uz); //u is also rotation axis
-    Translation tPoint = Translation(vec3(u));
-    matrix translationToPoint = getTranslationMatrix(tPoint);
-
-    normalize(u);
-
-    vec3 v = vec3(-u.y, u.x, 0);
-    vec3 w = vec3(cross(u,v));
-    normalize(v);
-    normalize(w);
-    
-    matrix rotateAroundX = getRotationMatrixAroundX(rotation.angle);
-    
-    matrix m = getMRotation(u,v,w);
-    matrix mTranspose = matrix(makeTranspose(m));
-
-    //TODO: Handle this mess
-    matrix res1 = matrix(matrixMultMatrix(translationToPoint,mTranspose));
-    matrix res2 = matrix(matrixMultMatrix(res1,rotateAroundX));
-    matrix res3 = matrix(matrixMultMatrix(res2,m));
-    matrix res4 = matrix(matrixMultMatrix(res3,translationToOrigin));
-    
-    return res4;
-}
-
-matrix getMRotation(const vec3 & u, const vec3 & v, const vec3 & w) {
-    matrix mat = matrix();
-
-    mat.m[0][0] = u.x;
-    mat.m[0][1] = u.y;
-    mat.m[0][2] = u.z;
-    mat.m[1][0] = v.x;
-    mat.m[1][1] = v.y;
-    mat.m[1][2] = v.z;
-    mat.m[2][0] = w.x;
-    mat.m[2][1] = w.y;
-    mat.m[2][2] = w.z;
-
-    return mat;
-}
-
-matrix getScalingMatrix(const Scaling & scaling) {
+void scale(vec3 & vec, const Scaling & scaling) {
       
-    matrix mat = matrix();
-
-    mat.m[0][0] = scaling.sx;
-    mat.m[1][1] = scaling.sy;
-    mat.m[2][2] = scaling.sz;
-
-    return mat;
+    vec.x *= scaling.sx;
+    vec.y *= scaling.sy;
+    vec.z *= scaling.sz;
 }
 
 matrix matrixMultMatrix(const matrix & mat1, const matrix & mat2) {
@@ -312,7 +264,6 @@ vec4 matrixMultVec4(vec4 & vec, const matrix & mat){
     }
 
     vec4 res;
-    double total;
     int size = 4;
     for (int i = 0; i < size ; i++) {
         res[i] = 0;

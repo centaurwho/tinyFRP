@@ -1,5 +1,6 @@
 #include <iterator>
 #include <algorithm>
+#include <iostream>
 
 #include "hw2_types.h"
 

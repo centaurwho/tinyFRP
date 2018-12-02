@@ -4,26 +4,26 @@
 #include "tinymath.h"
 #include "hw2_file_ops.h"
 
-extern Camera cameras[100];
-extern int numberOfCameras;
+extern std::vector<Camera> cameras;
+int numberOfCameras = 0;
 
-extern Model models[1000];
-extern int numberOfModels;
+extern std::vector<Model> models;
+int numberOfModels = 0;
 
-extern Color colors[100000];
-extern int numberOfColors;
+extern std::vector<Color> colors;
+int numberOfColors = 0;
 
-extern Translation translations[1000];
-extern int numberOfTranslations;
+extern std::vector<Translation> translations;
+int numberOfTranslations = 0;
 
-extern Rotation rotations[1000];
-extern int numberOfRotations;
+extern std::vector<Rotation> rotations;
+int numberOfRotations = 0;
 
-extern Scaling scalings[1000];
-extern int numberOfScalings;
+extern std::vector<Scaling> scalings;
+int numberOfScalings = 0;
 
-extern tinymath::vec3 vertices[100000];
-extern int numberOfVertices;
+extern std::vector<tinymath::vec3> vertices;
+int numberOfVertices = 0;
 
 extern Color backgroundColor;
 extern int backfaceCullingSetting;
@@ -49,28 +49,30 @@ void readCameraFile(char *camFileName) {
 
     for (i = 0; i < numberOfCameras; i++) {
         /* skip line "#Camera n" */
-        fscanf(fp, "%s %d", line, &(cameras[i].cameraId));
-        fscanf(fp, "%lf %lf %lf", &(cameras[i].pos.x), &(cameras[i].pos.y), &(cameras[i].pos.z));
-        fscanf(fp, "%lf %lf %lf", &(cameras[i].gaze.x), &(cameras[i].gaze.y), &(cameras[i].gaze.z));
-        fscanf(fp, "%lf %lf %lf", &(cameras[i].v.x), &(cameras[i].v.y), &(cameras[i].v.z));
+        Camera cam;
+        fscanf(fp, "%s %d", line, &(cam.cameraId));
+        fscanf(fp, "%lf %lf %lf", &(cam.pos.x), &(cam.pos.y), &(cam.pos.z));
+        fscanf(fp, "%lf %lf %lf", &(cam.gaze.x), &(cam.gaze.y), &(cam.gaze.z));
+        fscanf(fp, "%lf %lf %lf", &(cam.v.x), &(cam.v.y), &(cam.v.z));
 
-        cameras[i].gaze = tinymath::normalize(cameras[i].gaze);
-        cameras[i].u = tinymath::cross(cameras[i].gaze, cameras[i].v);
-        cameras[i].u = tinymath::normalize(cameras[i].u);
+        cam.gaze = tinymath::normalize(cam.gaze);
+        cam.u = tinymath::cross(cam.gaze, cam.v);
+        cam.u = tinymath::normalize(cam.u);
 
-        cameras[i].w.x = -cameras[i].gaze.x;
-        cameras[i].w.y = -cameras[i].gaze.y;
-        cameras[i].w.z = -cameras[i].gaze.z;
-        cameras[i].v = tinymath::cross(cameras[i].u, cameras[i].gaze);
-        cameras[i].v = tinymath::normalize(cameras[i].v);
+        cam.w.x = -cam.gaze.x;
+        cam.w.y = -cam.gaze.y;
+        cam.w.z = -cam.gaze.z;
+        cam.v = tinymath::cross(cam.u, cam.gaze);
+        cam.v = tinymath::normalize(cam.v);
 
 
-        fscanf(fp, "%lf %lf %lf %lf", &(cameras[i].l), &(cameras[i].r), &(cameras[i].b), &(cameras[i].t));
-        fscanf(fp, "%lf", &(cameras[i].n));
-        fscanf(fp, "%lf", &(cameras[i].f));
-        fscanf(fp, "%d %d", &(cameras[i].sizeX), &(cameras[i].sizeY));
-        fscanf(fp, "%s", cameras[i].outputFileName);
-
+        fscanf(fp, "%lf %lf %lf %lf", &(cam.l), &(cam.r), &(cam.b), &(cam.t));
+        fscanf(fp, "%lf", &(cam.n));
+        fscanf(fp, "%lf", &(cam.f));
+        fscanf(fp, "%d %d", &(cam.sizeX), &(cam.sizeY));
+        fscanf(fp, "%s", cam.outputFileName);
+        
+        cameras.push_back(cam);
     }
 }
 
@@ -107,15 +109,19 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%s", line);
 
     for (i = 1; i <= numberOfColors; i++) {
-        fscanf(fp, "%lf %lf %lf", &(colors[i].r), &(colors[i].g), &(colors[i].b));
+        Color color;
+        fscanf(fp, "%lf %lf %lf", &(color.r), &(color.g), &(color.b));
+        colors.push_back(color);
     }
 
     /* skip line "#Positions" */
     fscanf(fp, "%s", line);
 
     for (i = 1; i <= numberOfVertices; i++) {
-        fscanf(fp, "%lf %lf %lf", &(vertices[i].x), &(vertices[i].y), &(vertices[i].z));
-        vertices[i].colorId = i;
+        tinymath::vec3 vec;
+        fscanf(fp, "%lf %lf %lf", &(vec.x), &(vec.y), &(vec.z));
+        vec.colorId = i;
+        vertices.push_back(vec);
     }
 
     /* skip line "#Translations" */
@@ -125,7 +131,9 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%d", &numberOfTranslations);
 
     for (i = 1; i <= numberOfTranslations; i++) {
-        fscanf(fp, "%lf %lf %lf", &(translations[i].tx), &(translations[i].ty), &(translations[i].tz));
+        Translation t;
+        fscanf(fp, "%lf %lf %lf", &(t.tx), &(t.ty), &(t.tz));
+        translations.push_back(t);
     }
 
     /* skip line "#Scalings" */
@@ -135,7 +143,9 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%d", &numberOfScalings);
 
     for (i = 1; i <= numberOfScalings; i++) {
-        fscanf(fp, "%lf %lf %lf", &(scalings[i].sx), &(scalings[i].sy), &(scalings[i].sz));
+        Scaling s;
+        fscanf(fp, "%lf %lf %lf", &(s.sx), &(s.sy), &(s.sz));
+        scalings.push_back(s);
     }
 
     /* skip line "#Rotations" */
@@ -145,8 +155,9 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%d", &numberOfRotations);
 
     for (i = 1; i <= numberOfRotations; i++) {
-        fscanf(fp, "%lf %lf %lf %lf", &(rotations[i].angle), &(rotations[i].ux), &(rotations[i].uy),
-               &(rotations[i].uz));
+        Rotation r;
+        fscanf(fp, "%lf %lf %lf %lf", &(r.angle), &(r.ux), &(r.uy), &(r.uz));
+        rotations.push_back(r);
     }
 
     /* skip line "#Models" */
@@ -156,39 +167,41 @@ void readSceneFile(char *sceneFileName) {
     fscanf(fp, "%d", &numberOfModels);
 
     for (i = 0; i < numberOfModels; i++) {
+        Model m;
         /* read model id */
-        fscanf(fp, "%d", &(models[i].modelId));
+        fscanf(fp, "%d", &(m.modelId));
 
         /* read model type */
-        fscanf(fp, "%d", &(models[i].type));
+        fscanf(fp, "%d", &(m.type));
 
          /* read number of transformations */
-        fscanf(fp, "%d", &(models[i].numberOfTransformations));
+        fscanf(fp, "%d", &(m.numberOfTransformations));
 
-        for (j = 0; j < models[i].numberOfTransformations; j++) {
+        for (j = 0; j < m.numberOfTransformations; j++) {
             fscanf(fp, "%s", tmp);
-            models[i].transformationTypes[j] = tmp[0];
-            fscanf(fp, "%d", &(models[i].transformationIDs[j]));
+            m.transformationTypes[j] = tmp[0];
+            fscanf(fp, "%d", &(m.transformationIDs[j]));
         }
 
         /* read number of triangles */
-        fscanf(fp, "%d", &(models[i].numberOfTriangles));
+        fscanf(fp, "%d", &(m.numberOfTriangles));
 
-        for (j = 0; j < models[i].numberOfTriangles; j++) {
-            fscanf(fp, "%d %d %d", &(models[i].triangles[j].vertexIds[0]), &(models[i].triangles[j].vertexIds[1]),
-                   &(models[i].triangles[j].vertexIds[2]));
+        for (j = 0; j < m.numberOfTriangles; j++) {
+            Triangle t;
+            fscanf(fp, "%d %d %d", &(t.vertexIds[0]), &(t.vertexIds[1]), &(t.vertexIds[2]));
+            m.triangles.push_back(t);
         }
 
         //Find vertice ids used in the model. store them
-        for (auto & triangle : models[i].triangles) {
+        for (auto & triangle : m.triangles) {
             for (const auto vertexId : triangle.vertexIds) {
-                
-                if (std::find(models[i].usedVertices.begin(),models[i].usedVertices.end(),vertexId) == models[i].usedVertices.end()) {
-                    models[i].usedVertices.push_back(vertexId);
+                if (std::find(m.usedVertices.begin(),m.usedVertices.end(),vertexId) == m.usedVertices.end()) {
+                    m.usedVertices.push_back(vertexId);
                 }
             } 
         }
-
+        
+        models.push_back(m);
     }
 
     fclose(fp);

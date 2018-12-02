@@ -33,7 +33,7 @@ typedef struct {
     int transformationIDs[1000];
     char transformationTypes[1000];
     int numberOfTriangles;
-    Triangle triangles[25000];
+    std::vector<Triangle> triangles;
 
     std::vector<int> usedVertices;
 } Model;
