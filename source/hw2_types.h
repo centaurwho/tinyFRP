@@ -1,4 +1,5 @@
 #include "tinymath.h"
+#include <unordered_set>
 
 #ifndef HW2_TYPES_H
 #define HW2_TYPES_H
@@ -35,7 +36,7 @@ typedef struct {
     int numberOfTriangles;
     std::vector<Triangle> triangles;
 
-    std::vector<int> usedVertices;
+    std::unordered_set<int> usedVertices;
 } Model;
 
 #endif //HW2_TYPES_H

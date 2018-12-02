@@ -19,7 +19,7 @@ std::vector<tinymath::vec3> vertices;
 
 Color backgroundColor;
 
-extern int numberOfVertices;
+extern int numberOfCameras;
 
 // backface culling setting, default disabled
 int backfaceCullingSetting = 0;
@@ -87,7 +87,7 @@ void modellingTransform() {
 }
 
 
-std::vector<tinymath::vec3> cameraTransform(Camera & cam) {
+std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
     
     tinymath::vec3 u = cam.u;
     tinymath::vec3 v = cam.v;
@@ -109,7 +109,7 @@ std::vector<tinymath::vec3> cameraTransform(Camera & cam) {
     return newPositions;
 }
 
-std::vector<tinymath::vec3> perspectiveTransform(Camera cam, std::vector<tinymath::vec3> newPositions) { //map to CVV
+std::vector<tinymath::vec3> perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> newPositions) { //map to CVV
 
     double n = cam.n;
     double f = cam.f;
@@ -131,7 +131,7 @@ std::vector<tinymath::vec3> perspectiveTransform(Camera cam, std::vector<tinymat
     return newPositions;
 }
 
-void viewportTransform(Camera cam, std::vector<tinymath::vec3> newPositions ) { //map to 2d
+void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositions ) { //map to 2d
     int nx = cam.sizeX; 
     int ny = cam.sizeY; 
 
@@ -161,9 +161,7 @@ void viewportTransform(Camera cam, std::vector<tinymath::vec3> newPositions ) { 
 
 void rasterize() {} //TODO
 
-void forwardRenderingPipeline(Camera cam) {
-   
-    modellingTransform();
+void forwardRenderingPipeline(const Camera & cam) {
     
     std::vector<tinymath::vec3> camPos = cameraTransform(cam); 
     std::vector<tinymath::vec3> perPos = perspectiveTransform(cam,camPos);
@@ -182,17 +180,18 @@ int main(int argc, char **argv) {
 
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
+    
+    modellingTransform();
 
     image = 0;
 
-    for (int i = 0; i < 1; i++) {
-        Camera currentCam = cameras[i];
+    for (auto & cam: cameras) {
         
-        int nx = cameras[i].sizeX;
-        int ny = cameras[i].sizeY;
+        int nx = cam.sizeX;
+        int ny = cam.sizeY;
         
         if (image) {
-            for (int j = 0; j < cameras[i].sizeX; j++) {
+            for (int j = 0; j < nx; j++) {
                 delete image[j];
             }
             delete[] image;
@@ -213,13 +212,13 @@ int main(int argc, char **argv) {
             }
         }
         
-        initializeImage(currentCam);
+        initializeImage(cam);
 
         //OUR MAIN FUNCTION
-        forwardRenderingPipeline(currentCam);
+        forwardRenderingPipeline(cam);
 
-        writeImageToPPMFile(currentCam);
-        convertPPMToPNG(currentCam.outputFileName, 1);
+        writeImageToPPMFile(cam);
+        convertPPMToPNG(cam.outputFileName, 1);
     }
     
     return 0;

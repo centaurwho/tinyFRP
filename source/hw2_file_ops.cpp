@@ -195,8 +195,8 @@ void readSceneFile(char *sceneFileName) {
         //Find vertice ids used in the model. store them
         for (auto & triangle : m.triangles) {
             for (const auto vertexId : triangle.vertexIds) {
-                if (std::find(m.usedVertices.begin(),m.usedVertices.end(),vertexId) == m.usedVertices.end()) {
-                    m.usedVertices.push_back(vertexId);
+                if (m.usedVertices.find(vertexId) == m.usedVertices.end()) {
+                    m.usedVertices.insert(vertexId);
                 }
             } 
         }
