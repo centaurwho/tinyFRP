@@ -39,4 +39,16 @@ typedef struct {
     std::unordered_set<int> usedVertices;
 } Model;
 
+class line {
+public:
+    int x0, x1, y0, y1;
+
+    line(int x0, int y0, int x1, int y1)
+        :x0(x0), y0(y0), x1(x1), y1(y1) {} 
+
+    double operator()(int x, int y) const {
+        return x0*y1-y0*x1 + x*(y0-y1) + y*(x1-x0);
+    }
+};
+
 #endif //HW2_TYPES_H

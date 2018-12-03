@@ -213,10 +213,10 @@ void readSceneFile(char *sceneFileName) {
  * If given value is more than 255, converts value to 255.
  * Otherwise returns value itself.
  */
-int make_between_0_255(double value) {
+int clamp(double value) {
     if (value >= 255.0) return 255;
     if (value <= 0.0) return 0;
-    return (int) (value);
+    return (int) value;
 }
 
 /*
@@ -237,7 +237,7 @@ void writeImageToPPMFile(Camera camera) {
 
     for (j = camera.sizeY - 1; j >= 0; j--) {
         for (i = 0; i < camera.sizeX; i++) {
-            fprintf(outputFile, "%d %d %d ", make_between_0_255(image[i][j].r), make_between_0_255(image[i][j].g), make_between_0_255(image[i][j].b));
+            fprintf(outputFile, "%d %d %d ", clamp(image[i][j].r), clamp(image[i][j].g), clamp(image[i][j].b));
         }
         fprintf(outputFile, "\n");
     }

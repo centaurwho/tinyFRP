@@ -22,7 +22,7 @@ void readSceneFile(char *sceneFileName);
  * If given value is more than 255, converts value to 255.
  * Otherwise returns value itself.
  */
-int make_between_0_255(double value);
+int clamp(double value);
 
 /*
  * Writes contents of image (Color**) into a PPM file.
