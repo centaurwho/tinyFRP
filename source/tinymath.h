@@ -39,9 +39,7 @@ public:
 
 namespace tinymath {
 
-
 class vec3 {
-
 public:
     double x;
     double y;

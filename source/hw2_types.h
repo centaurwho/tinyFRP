@@ -19,9 +19,55 @@ typedef struct {
     char outputFileName[80];
 } Camera;
 
-typedef struct {
+class Color {
+public:
     double r, g, b;
-} Color;
+    
+
+    Color operator+(const Color & rhs) {
+        Color c;
+        c.r = r + rhs.r;
+        c.g = g + rhs.g;
+        c.b = b + rhs.b;
+        return c;
+    }
+    
+    Color operator-(const Color & rhs) {
+        Color c;
+        c.r = r - rhs.r;
+        c.g = g - rhs.g;
+        c.b = b - rhs.b;
+        return c;
+    }
+    
+    Color operator*(double d) {
+        Color c;
+        c.r = r*d;
+        c.g = g*d;
+        c.b = b*d;
+        return c;
+    }
+    
+    Color operator/(double d) {
+        Color c;
+        c.r = r/d;
+        c.g = g/d;
+        c.b = b/d;
+        return c;
+    }
+    
+    Color & round(){
+        r = (int)(r + 0.5);
+        g = (int)(g + 0.5);
+        b = (int)(b + 0.5);
+        return *this;
+    }
+
+    void print() {
+        std::cout << r << " " << g << " " << b << std::endl;
+    }
+
+};
 
 typedef struct {
     int vertexIds[3];

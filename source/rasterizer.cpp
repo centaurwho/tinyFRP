@@ -1,3 +1,6 @@
+
+//TODO: Fix the thing.
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -23,8 +26,6 @@ Color backgroundColor;
 int backfaceCullingSetting = 0;
 
 Color **image;
-
-
 
 /*
 	Initializes image with background color
@@ -58,18 +59,16 @@ tinymath::vec3 calculateNormal(const Triangle & triangle) {
 void modellingTransform() { 
     std::vector<tinymath::vec3> transModels;
     
+
     for (const auto & model: models) {
-        
         for (auto vertexId: model.usedVertices) {
             for (int i= 0; i < model.numberOfTransformations; i++) {
-                
                 char tType = model.transformationTypes[i];
                 int tId = model.transformationIDs[i];
-   
                 if (tType == 't') {
                     Translation t = translations[tId-1];
                     tinymath::translate(vertices[vertexId-1],t);
-                }
+                }   
                 else if (tType == 's') {
                     Scaling s = scalings[tId-1];
                     tinymath::scale(vertices[vertexId-1],s);
@@ -92,10 +91,10 @@ std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
     tinymath::vec3 pos = cam.pos;
     
     std::vector<tinymath::vec3> newPositions;
-    
     for (const auto & vertex: vertices) {
-        tinymath::vec3 vec = vertex;
         
+        tinymath::vec3 vec = vertex;
+         
         vec.x = dot(vertex,u) - dot(pos,u);
         vec.y = dot(vertex,v) - dot(pos,v);
         vec.z = dot(vertex,w) - dot(pos,w);
@@ -106,7 +105,8 @@ std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
     return newPositions;
 }
 
-std::vector<tinymath::vec3> perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> newPositions) { //map to CVV
+std::vector<tinymath::vec3> 
+perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> & relPositions) { //map to CVV
 
     double n = cam.n;
     double f = cam.f;
@@ -115,7 +115,7 @@ std::vector<tinymath::vec3> perspectiveTransform(const Camera & cam, std::vector
     double b = cam.b;
     double t = cam.t;
 
-    for (auto & vertex: newPositions) {
+    for (auto & vertex: relPositions) {
         double x = vertex.x;
         double y = vertex.y;
         double z = vertex.z;
@@ -125,38 +125,69 @@ std::vector<tinymath::vec3> perspectiveTransform(const Camera & cam, std::vector
         vertex.z = (f+n)/(f-n) + (2*f*n)/(z*(f-n));
     }
 
-    return newPositions;
+    return relPositions;
 }
+
+void rasterizeLine(int x0, int y0, int x1, int y1, Color c0, Color c1) {
+
+    if (x1 < x0) {
+        std::swap(x0,x1);
+        std::swap(y0,y1);
+    }
+    
+    int inc;
+    double m = (double)(y1-y0)/(x1-x0);
+    
+    if (m > 0 && m <= 1)
+        inc = 1;
+    if (m > 1)
+        inc = -1;
+
+    int y = y0;
+    int d = (y0 - y1) + 0.5*(x1 - x0);
+
+    Color c = c0;
+    Color dc = (c1 - c0)/(x1 - x0);
+    for (int x = x0; x <= x1; x++) {
+        image[x][y] = c.round();
+        if (d < 0) {
+            y += inc;
+            d += (y0 - y1) + (x1 - x0); 
+        }
+        else 
+            d+= (y0-y1);
+        c = c+dc;
+    }
+}
+
+
 
 void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositions ) { //map to 2d
     int nx = cam.sizeX; 
     int ny = cam.sizeY; 
-
+    
     for (const auto & model: models) {
         for (const auto & triangle: model.triangles) {
-
-            if (backfaceCullingSetting == 0 || 
-                dot(calculateNormal(triangle), vertices[triangle.vertexIds[0]-1]) < 0) { 
-                
+            
+            //if (backfaceCullingSetting == 0 || 
+            //    dot(calculateNormal(triangle), vertices[triangle.vertexIds[0]-1]) < 0) { 
+            if (1) {  
                 int xmin = nx, xmax = -1,
                     ymin = ny, ymax = -1;
-
+                
                 std::vector<tinymath::vec3> points;
                 for (auto vertexId : triangle.vertexIds) {
                     tinymath::vec3 vertex = newPositions[vertexId-1];
 
-                    double x = vertex.x; 
-                    double y = vertex.y;
-                    double z = vertex.z;
-
-                    int pixelx = (int)((x*nx + (nx-1) + 1)/2);
-                    int pixely = (int)((y*ny + (ny-1) + 1)/2);
+                    int pixelx = (int)((vertex.x*nx + (nx-1) + 1)/2);
+                    int pixely = (int)((vertex.y*ny + (ny-1) + 1)/2);
                     
                     vertex.x = pixelx;
                     vertex.y = pixely;
 
-                    points.push_back(vertex);
+                    image[pixelx][pixely] = colors[vertex.colorId];
                     
+                    points.push_back(vertex);
                     if (model.type == 1){
                         xmin = std::min(xmin,pixelx);
                         xmax = std::max(xmax,pixelx);
@@ -165,6 +196,7 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
                     }
                 }
 
+                
                 int x0 = points[0].x;
                 int y0 = points[0].y;
                 Color c0 = colors[points[0].colorId-1];
@@ -184,25 +216,21 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
 
                 //RASTERIZATION HERE
                 if (model.type == 0) { //wireframe
-                    
                 }
                 else { //solid
-                    for (int x = xmin; x < xmax; x++){
-                        for (int y = ymin; y < ymax; y++){
+                    for (int x = xmin; x <= xmax; x++){
+                        for (int y = ymin; y <= ymax; y++){
                             double alpha = line12(x,y)/f12; 
                             double beta = line20(x,y)/f20; 
                             double gamma = line01(x,y)/f01; 
-
                             if (alpha >= 0 && beta >= 0 && gamma >= 0){
                                 Color c;
-                                c.r = alpha*c0.r + beta*c1.r + gamma*c2.r;
-                                c.g = alpha*c0.g + beta*c1.g + gamma*c2.g;
-                                c.b = alpha*c0.b + beta*c1.b + gamma*c2.b;
+                                c = c0*alpha + c1*beta + c2*gamma;
                                 image[x][y] = c;
                             }
                         }
-                    }                
-                } 
+                    }             
+                }
             }
         }
     } 
@@ -210,10 +238,10 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
 }
 
 void forwardRenderingPipeline(const Camera & cam) {
-    
-    std::vector<tinymath::vec3> camPos = cameraTransform(cam); 
-    std::vector<tinymath::vec3> perPos = perspectiveTransform(cam,camPos);
-    viewportTransform(cam, perPos); 
+
+    std::vector<tinymath::vec3> relPos = cameraTransform(cam); 
+    perspectiveTransform(cam, relPos);
+    viewportTransform(cam, relPos); 
 }
 
 
@@ -226,13 +254,12 @@ int main(int argc, char **argv) {
 
     readSceneFile(argv[1]);
     readCameraFile(argv[2]);
-    
+
     modellingTransform();
-
+    
     image = 0;
-
     for (auto & cam: cameras) {
-        
+         
         int nx = cam.sizeX;
         int ny = cam.sizeY;
         
@@ -265,7 +292,7 @@ int main(int argc, char **argv) {
 
         writeImageToPPMFile(cam);
         convertPPMToPNG(cam.outputFileName, 1);
-    }
+}
     
     return 0;
 }

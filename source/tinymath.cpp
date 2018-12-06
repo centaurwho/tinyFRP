@@ -153,7 +153,7 @@ void rotate(vec3 & vec, const Rotation & rotation) {
     double rep = (u*x+v*y+w*z)*minusCos;
 
     vec.x = u*rep + x*cosT + (-w*y + v*z)*sinT;
-    vec.y = v*rep + y*cosT + (-w*x - u*z)*sinT;
+    vec.y = v*rep + y*cosT + (w*x - u*z)*sinT;
     vec.z = w*rep + z*cosT + (-v*x + u*y)*sinT;
 
 }
