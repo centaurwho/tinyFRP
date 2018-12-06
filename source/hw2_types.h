@@ -63,6 +63,13 @@ public:
         return *this;
     }
 
+    void swap(Color & rhs) {
+        std::swap(r,rhs.r);
+        std::swap(g,rhs.g);
+        std::swap(b,rhs.b);
+    
+    }
+
     void print() {
         std::cout << r << " " << g << " " << b << std::endl;
     }

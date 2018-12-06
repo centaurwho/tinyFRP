@@ -1,6 +1,3 @@
-
-//TODO: Fix the thing.
-
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -130,34 +127,63 @@ perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> & relPositi
 
 void rasterizeLine(int x0, int y0, int x1, int y1, Color c0, Color c1) {
 
-    if (x1 < x0) {
-        std::swap(x0,x1);
-        std::swap(y0,y1);
-    }
-    
-    int inc;
-    double m = (double)(y1-y0)/(x1-x0);
-    
-    if (m > 0 && m <= 1)
-        inc = 1;
-    if (m > 1)
-        inc = -1;
+    bool l = false;
 
-    int y = y0;
-    int d = (y0 - y1) + 0.5*(x1 - x0);
+    if (abs(y1-y0) > abs(x1-x0)) {
+        std::cout << "Long axis is y" << std::endl;
+        std::cout << std::endl;
+        l = true;
+    }
+
+    int inc;
+    if ((l == false && y1 < y0) || (l == true && x1 < x0)) {
+        inc = -1;
+    } else {
+        inc = 1;
+    }
+
+    std::cout << "Started rasterizing line" << std::endl;
+    std::cout << "x0: " << x0 << " y0: " << y0 << std::endl;
+    std::cout << "x1: " << x1 << " y1: " << y1 << std::endl;
+    std::cout << std::endl;
 
     Color c = c0;
+    
+    if (l == true) {
+        Color dc = (c1 - c0)/(y1 - y0);
+    
+        int x = x0;
+        int d = inc*0.5*(y0 - y1) + (x1 - x0);
+
+        for (int y = y0; y <= y1; y++) {
+            image[x][y] = c.round();
+            if (d*inc > 0) {
+                x += inc;
+                d += inc*(y0 - y1) + (x1 - x0); 
+            }
+            else 
+                d+= (x1-x0);
+            c = c+dc;
+        }
+        return;
+    }
+    
+    int y = y0;
+    int d = (y0 - y1) + inc*0.5*(x1 - x0);
+    
     Color dc = (c1 - c0)/(x1 - x0);
+
     for (int x = x0; x <= x1; x++) {
         image[x][y] = c.round();
-        if (d < 0) {
+        if (d*inc < 0) {
             y += inc;
-            d += (y0 - y1) + (x1 - x0); 
+            d += (y0 - y1) + inc*(x1 - x0); 
         }
         else 
             d+= (y0-y1);
         c = c+dc;
     }
+    std::cout << "Ended rasterizing line" << std::endl;
 }
 
 
@@ -179,13 +205,13 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
                 for (auto vertexId : triangle.vertexIds) {
                     tinymath::vec3 vertex = newPositions[vertexId-1];
 
-                    int pixelx = (int)((vertex.x*nx + (nx-1) + 1)/2);
-                    int pixely = (int)((vertex.y*ny + (ny-1) + 1)/2);
+                    int pixelx = (vertex.x*nx + (nx-1) + 1)/2;
+                    int pixely = (vertex.y*ny + (ny-1) + 1)/2;
                     
                     vertex.x = pixelx;
                     vertex.y = pixely;
 
-                    image[pixelx][pixely] = colors[vertex.colorId];
+                    image[pixelx][pixely] = colors[vertex.colorId-1];
                     
                     points.push_back(vertex);
                     if (model.type == 1){
@@ -197,7 +223,7 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
                 }
 
                 
-                int x0 = points[0].x;
+                double x0 = points[0].x;
                 int y0 = points[0].y;
                 Color c0 = colors[points[0].colorId-1];
                 int x1 = points[1].x;
@@ -216,6 +242,10 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
 
                 //RASTERIZATION HERE
                 if (model.type == 0) { //wireframe
+                    rasterizeLine(x0,y0,x1,y1,c0,c1); 
+                    rasterizeLine(x1,y1,x2,y2,c1,c2); 
+                    rasterizeLine(x2,y2,x0,y0,c2,c0); 
+                
                 }
                 else { //solid
                     for (int x = xmin; x <= xmax; x++){
