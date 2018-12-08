@@ -38,17 +38,15 @@ void initializeImage(Camera cam) {
         }
 }
 
-tinymath::vec3 calculateNormal(const Triangle & triangle) {
+tinymath::vec3 calculateNormal( const tinymath::vec3 & vertexA, 
+                                const tinymath::vec3 & vertexB, 
+                                const tinymath::vec3 & vertexC ) {
 
     tinymath::vec3 normal;
-    
-    tinymath::vec3 vertexA = vertices[triangle.vertexIds[0]-1];
-    tinymath::vec3 vertexB = vertices[triangle.vertexIds[1]-1];
-    tinymath::vec3 vertexC = vertices[triangle.vertexIds[2]-1];
 
     tinymath::vec3 edgeBC = vertexC - vertexB;
     tinymath::vec3 edgeBA = vertexA - vertexB;
-
+    
     normal = tinymath::normalize(tinymath::cross(edgeBC, edgeBA));
     return normal;
 }
@@ -86,7 +84,7 @@ std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
     tinymath::vec3 v = cam.v;
     tinymath::vec3 w = cam.w;
     tinymath::vec3 pos = cam.pos;
-    
+   
     std::vector<tinymath::vec3> newPositions;
     for (const auto & vertex: vertices) {
         
@@ -98,7 +96,8 @@ std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
 
         newPositions.push_back(vec);
     }
-    
+
+
     return newPositions;
 }
 
@@ -128,28 +127,26 @@ perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> & relPositi
 void rasterizeLine(int x0, int y0, int x1, int y1, Color c0, Color c1) {
 
     bool l = false;
-
+    
     if (abs(y1-y0) > abs(x1-x0)) {
-        std::cout << "Long axis is y" << std::endl;
-        std::cout << std::endl;
         l = true;
     }
 
-    int inc;
-    if ((l == false && y1 < y0) || (l == true && x1 < x0)) {
-        inc = -1;
-    } else {
-        inc = 1;
+    if ((l == false && x1 < x0) || (l == true && y1 < y0)) {
+       std::swap(x0,x1); 
+       std::swap(y0,y1); 
+       c0.swap(c1); 
     }
 
-    std::cout << "Started rasterizing line" << std::endl;
-    std::cout << "x0: " << x0 << " y0: " << y0 << std::endl;
-    std::cout << "x1: " << x1 << " y1: " << y1 << std::endl;
-    std::cout << std::endl;
+    int inc = 1;
+    if ((l == false && y1 < y0) || (l == true && x1 < x0)){
+        inc = -1;
+    }
 
     Color c = c0;
     
     if (l == true) {
+        
         Color dc = (c1 - c0)/(y1 - y0);
     
         int x = x0;
@@ -183,7 +180,6 @@ void rasterizeLine(int x0, int y0, int x1, int y1, Color c0, Color c1) {
             d+= (y0-y1);
         c = c+dc;
     }
-    std::cout << "Ended rasterizing line" << std::endl;
 }
 
 
@@ -193,78 +189,87 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
     int ny = cam.sizeY; 
     
     for (const auto & model: models) {
+
         for (const auto & triangle: model.triangles) {
             
-            //if (backfaceCullingSetting == 0 || 
-            //    dot(calculateNormal(triangle), vertices[triangle.vertexIds[0]-1]) < 0) { 
-            if (1) {  
-                int xmin = nx, xmax = -1,
-                    ymin = ny, ymax = -1;
+            tinymath::vec3 v0 = newPositions[triangle.vertexIds[0]-1];
+            tinymath::vec3 v1 = newPositions[triangle.vertexIds[1]-1];
+            tinymath::vec3 v2 = newPositions[triangle.vertexIds[2]-1];
+            
+            tinymath::vec3 normal = calculateNormal(v0,v1,v2);
+
+            double dot = tinymath::dot(calculateNormal(v0,v1,v2),v0);
+            
+            if (backfaceCullingSetting == 1 && dot < 0) {
+                continue;
+            }
+            
+            int xmin = nx, xmax = -1,
+                ymin = ny, ymax = -1;
+            
+            std::vector<tinymath::vec3> points;
+
+            for (auto vertexId : triangle.vertexIds) {
+                tinymath::vec3 vertex = newPositions[vertexId-1];
+
+                int pixelx = (vertex.x*nx + (nx-1) + 1)/2;
+                int pixely = (vertex.y*ny + (ny-1) + 1)/2;
                 
-                std::vector<tinymath::vec3> points;
-                for (auto vertexId : triangle.vertexIds) {
-                    tinymath::vec3 vertex = newPositions[vertexId-1];
+                vertex.x = pixelx;
+                vertex.y = pixely;
 
-                    int pixelx = (vertex.x*nx + (nx-1) + 1)/2;
-                    int pixely = (vertex.y*ny + (ny-1) + 1)/2;
-                    
-                    vertex.x = pixelx;
-                    vertex.y = pixely;
-
-                    image[pixelx][pixely] = colors[vertex.colorId-1];
-                    
-                    points.push_back(vertex);
-                    if (model.type == 1){
-                        xmin = std::min(xmin,pixelx);
-                        xmax = std::max(xmax,pixelx);
-                        ymin = std::min(ymin,pixely);
-                        ymax = std::max(ymax,pixely);
-                    }
+                image[pixelx][pixely] = colors[vertex.colorId-1];
+                
+                points.push_back(vertex);
+                if (model.type == 1){
+                    xmin = std::min(xmin,pixelx);
+                    xmax = std::max(xmax,pixelx);
+                    ymin = std::min(ymin,pixely);
+                    ymax = std::max(ymax,pixely);
                 }
+            }
 
-                
-                double x0 = points[0].x;
-                int y0 = points[0].y;
-                Color c0 = colors[points[0].colorId-1];
-                int x1 = points[1].x;
-                int y1 = points[1].y;
-                Color c1 = colors[points[1].colorId-1];
-                int x2 = points[2].x;
-                int y2 = points[2].y;
-                Color c2 = colors[points[2].colorId-1];
+            
+            int x0 = points[0].x;
+            int y0 = points[0].y;
+            Color c0 = colors[points[0].colorId-1];
+            int x1 = points[1].x;
+            int y1 = points[1].y;
+            Color c1 = colors[points[1].colorId-1];
+            int x2 = points[2].x;
+            int y2 = points[2].y;
+            Color c2 = colors[points[2].colorId-1];
 
-                line line01(x0,y0,x1,y1);
-                double f01 = line01(x2,y2);
-                line line12(x1,y1,x2,y2);
-                double f12 = line12(x0,y0);
-                line line20(x2,y2,x0,y0);
-                double f20 = line20(x1,y1);
+            line line01(x0,y0,x1,y1);
+            double f01 = line01(x2,y2);
+            line line12(x1,y1,x2,y2);
+            double f12 = line12(x0,y0);
+            line line20(x2,y2,x0,y0);
+            double f20 = line20(x1,y1);
 
-                //RASTERIZATION HERE
-                if (model.type == 0) { //wireframe
-                    rasterizeLine(x0,y0,x1,y1,c0,c1); 
-                    rasterizeLine(x1,y1,x2,y2,c1,c2); 
-                    rasterizeLine(x2,y2,x0,y0,c2,c0); 
-                
-                }
-                else { //solid
-                    for (int x = xmin; x <= xmax; x++){
-                        for (int y = ymin; y <= ymax; y++){
-                            double alpha = line12(x,y)/f12; 
-                            double beta = line20(x,y)/f20; 
-                            double gamma = line01(x,y)/f01; 
-                            if (alpha >= 0 && beta >= 0 && gamma >= 0){
-                                Color c;
-                                c = c0*alpha + c1*beta + c2*gamma;
-                                image[x][y] = c;
-                            }
+            //RASTERIZATION HERE
+            if (model.type == 0) { //wireframe
+                rasterizeLine(x0,y0,x1,y1,c0,c1); 
+                rasterizeLine(x1,y1,x2,y2,c1,c2); 
+                rasterizeLine(x2,y2,x0,y0,c2,c0); 
+            
+            }
+            else { //solid
+                for (int x = xmin; x <= xmax; x++){
+                    for (int y = ymin; y <= ymax; y++){
+                        double alpha = line12(x,y)/f12; 
+                        double beta = line20(x,y)/f20; 
+                        double gamma = line01(x,y)/f01; 
+                        if (alpha >= 0 && beta >= 0 && gamma >= 0){
+                            Color c;
+                            c = c0*alpha + c1*beta + c2*gamma;
+                            image[x][y] = c;
                         }
-                    }             
-                }
+                    }
+                }             
             }
         }
     } 
-
 }
 
 void forwardRenderingPipeline(const Camera & cam) {
