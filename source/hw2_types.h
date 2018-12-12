@@ -1,4 +1,4 @@
-#include "tinymath.h"
+#include "hw2_math_ops.h"
 #include <unordered_set>
 
 #ifndef HW2_TYPES_H
@@ -67,7 +67,6 @@ public:
         std::swap(r,rhs.r);
         std::swap(g,rhs.g);
         std::swap(b,rhs.b);
-    
     }
 
     void print() {

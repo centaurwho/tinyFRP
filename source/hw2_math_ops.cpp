@@ -1,4 +1,4 @@
-#include "tinymath.h"
+#include "hw2_math_ops.h"
 
 #include <cstdio>
 #include <iostream>

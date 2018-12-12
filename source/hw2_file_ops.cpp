@@ -1,7 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include "tinymath.h"
+#include "hw2_math_ops.h"
 #include "hw2_file_ops.h"
 
 extern std::vector<Camera> cameras;

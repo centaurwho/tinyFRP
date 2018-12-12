@@ -2,12 +2,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-
+#include <unordered_map>
+#include <utility>
 
 #include "hw2_types.h"
 #include "hw2_file_ops.h"
-#include "tinymath.h"
-
+#include "hw2_math_ops.h"
 
 std::vector<Camera> cameras;
 std::vector<Model> models;
@@ -16,6 +16,9 @@ std::vector<Translation> translations;
 std::vector<Rotation> rotations;
 std::vector<Scaling> scalings;
 std::vector<tinymath::vec3> vertices;
+
+std::vector<std::unordered_map<int, tinymath::vec3>> nvertices;
+
 
 Color backgroundColor;
 
@@ -52,73 +55,117 @@ tinymath::vec3 calculateNormal( const tinymath::vec3 & vertexA,
 }
 
 void modellingTransform() { 
-    std::vector<tinymath::vec3> transModels;
-    
+
+    std::cout << "Started Modelling Transform" << std::endl;
 
     for (const auto & model: models) {
-        for (auto vertexId: model.usedVertices) {
+        std::unordered_map<int, tinymath::vec3> map;
+        
+        for (const auto & vertexId: model.usedVertices) {
+            map.insert(std::make_pair(vertexId, vertices[vertexId-1]));
+            
             for (int i= 0; i < model.numberOfTransformations; i++) {
                 char tType = model.transformationTypes[i];
                 int tId = model.transformationIDs[i];
                 if (tType == 't') {
                     Translation t = translations[tId-1];
-                    tinymath::translate(vertices[vertexId-1],t);
+                    tinymath::translate(map[vertexId],t);
                 }   
                 else if (tType == 's') {
                     Scaling s = scalings[tId-1];
-                    tinymath::scale(vertices[vertexId-1],s);
+                    tinymath::scale(map[vertexId],s);
                 }
                 else { //model.type == 'r'
                     Rotation r = rotations[tId-1];
-                    tinymath::rotate(vertices[vertexId-1],r);
+                    tinymath::rotate(map[vertexId],r);
                 }
             }
         }
+        nvertices.push_back(map);
     }
+
 }
 
 
-std::vector<tinymath::vec3> cameraTransform(const Camera & cam) {
+std::vector<std::unordered_map<int, tinymath::vec3>> 
+cameraTransform(const Camera & cam) {
+    
+    std::cout << "Started Camera Transform" << std::endl;
     
     tinymath::vec3 u = cam.u;
     tinymath::vec3 v = cam.v;
     tinymath::vec3 w = cam.w;
     tinymath::vec3 pos = cam.pos;
-   
-    std::vector<tinymath::vec3> newPositions;
-    for (const auto & vertex: vertices) {
-        
-        tinymath::vec3 vec = vertex;
-         
-        vec.x = dot(vertex,u) - dot(pos,u);
-        vec.y = dot(vertex,v) - dot(pos,v);
-        vec.z = dot(vertex,w) - dot(pos,w);
+    
+    std::vector<std::unordered_map<int, tinymath::vec3>> newPositions;
+    
+    for (const auto & model: models) {
+        std::unordered_map<int, tinymath::vec3> map;
+        for (const auto & vertexId: model.usedVertices) {
+            
+            tinymath::vec3 vertex = nvertices[model.modelId-1][vertexId];
+            tinymath::vec3 vec = vertex; 
+            vec.x = dot(vertex,u) - dot(pos,u);
+            vec.y = dot(vertex,v) - dot(pos,v);
+            vec.z = dot(vertex,w) - dot(pos,w);
 
-        newPositions.push_back(vec);
+            map.insert(std::make_pair(vertexId,vec));
+        }
+        newPositions.push_back(map);
     }
-
-
+    for (const auto & map: newPositions) {
+        for (const auto & pair: map) {
+            std::cout << pair.first << " ";
+            printVec3(pair.second);
+        }
+        std::cout << std::endl;
+    }
     return newPositions;
 }
 
-std::vector<tinymath::vec3> 
-perspectiveTransform(const Camera & cam, std::vector<tinymath::vec3> & relPositions) { //map to CVV
+std::vector<std::unordered_map<int, tinymath::vec3>> 
+perspectiveTransform(const Camera & cam, 
+                     std::vector<std::unordered_map<int, tinymath::vec3>> & relPositions) { 
+    
+    std::cout << "Started Perspective Transform" << std::endl;
+    for (const auto & map: relPositions) {
+        for (const auto & pair: map) {
+            std::cout << pair.first << " ";
+            printVec3(pair.second);
+        }
+        std::cout << std::endl;
+    }
+    
+    std::cout << std::endl;
 
-    double n = cam.n;
-    double f = cam.f;
-    double l = cam.l;
-    double r = cam.r;
-    double b = cam.b;
-    double t = cam.t;
+    double n = cam.n,
+           f = cam.f,
+           l = cam.l,
+           r = cam.r,
+           b = cam.b,
+           t = cam.t;
 
-    for (auto & vertex: relPositions) {
-        double x = vertex.x;
-        double y = vertex.y;
-        double z = vertex.z;
+    for (auto & map: relPositions) {
+        for (auto & pair: map) {
+            tinymath::vec3 vertex = pair.second;
+            
+            double x = vertex.x,
+                   y = vertex.y,
+                   z = vertex.z;
 
-        vertex.x = -(2*n*x + (r+l)*z) / ((r-l)*z);
-        vertex.y = -(2*n*y + (t+b)*z) / ((t-b)*z);
-        vertex.z = (f+n)/(f-n) + (2*f*n)/(z*(f-n));
+            vertex.x = -(2*n*x + (r+l)*z) / ((r-l)*z);
+            vertex.y = -(2*n*y + (t+b)*z) / ((t-b)*z);
+            vertex.z = (f+n)/(f-n) + (2*f*n)/(z*(f-n));
+            pair.second = vertex;
+        }
+    }
+    
+    for (const auto & map: relPositions) {
+        for (const auto & pair: map) {
+            std::cout << pair.first << " ";
+            printVec3(pair.second);
+        }
+        std::cout << std::endl;
     }
 
     return relPositions;
@@ -184,18 +231,32 @@ void rasterizeLine(int x0, int y0, int x1, int y1, Color c0, Color c1) {
 
 
 
-void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositions ) { //map to 2d
+void viewportTransform(const Camera & cam, 
+                       std::vector<std::unordered_map<int, tinymath::vec3>> & newPositions ) { //map to 2d
+    std::cout << "Started Viewing Transform" << std::endl;
+    
     int nx = cam.sizeX; 
     int ny = cam.sizeY; 
+    for (const auto & map: newPositions) {
+        for (const auto & pair: map) {
+            std::cout << pair.first << " ";
+            printVec3(pair.second);
+        }
+        std::cout << std::endl;
+    }
     
     for (const auto & model: models) {
 
         for (const auto & triangle: model.triangles) {
             
-            tinymath::vec3 v0 = newPositions[triangle.vertexIds[0]-1];
-            tinymath::vec3 v1 = newPositions[triangle.vertexIds[1]-1];
-            tinymath::vec3 v2 = newPositions[triangle.vertexIds[2]-1];
+            tinymath::vec3 v0 = newPositions[model.modelId-1][triangle.vertexIds[0]];
+            tinymath::vec3 v1 = newPositions[model.modelId-1][triangle.vertexIds[1]];
+            tinymath::vec3 v2 = newPositions[model.modelId-1][triangle.vertexIds[2]];
             
+            printVec3(v0);
+            printVec3(v1);
+            printVec3(v2);
+
             tinymath::vec3 normal = calculateNormal(v0,v1,v2);
 
             double dot = tinymath::dot(calculateNormal(v0,v1,v2),v0);
@@ -210,7 +271,7 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
             std::vector<tinymath::vec3> points;
 
             for (auto vertexId : triangle.vertexIds) {
-                tinymath::vec3 vertex = newPositions[vertexId-1];
+                tinymath::vec3 vertex = newPositions[model.modelId-1][vertexId];
 
                 int pixelx = (vertex.x*nx + (nx-1) + 1)/2;
                 int pixely = (vertex.y*ny + (ny-1) + 1)/2;
@@ -247,7 +308,6 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
             line line20(x2,y2,x0,y0);
             double f20 = line20(x1,y1);
 
-            //RASTERIZATION HERE
             if (model.type == 0) { //wireframe
                 rasterizeLine(x0,y0,x1,y1,c0,c1); 
                 rasterizeLine(x1,y1,x2,y2,c1,c2); 
@@ -274,7 +334,7 @@ void viewportTransform(const Camera & cam, std::vector<tinymath::vec3> newPositi
 
 void forwardRenderingPipeline(const Camera & cam) {
 
-    std::vector<tinymath::vec3> relPos = cameraTransform(cam); 
+    std::vector<std::unordered_map<int, tinymath::vec3>> relPos = cameraTransform(cam); 
     perspectiveTransform(cam, relPos);
     viewportTransform(cam, relPos); 
 }
