@@ -113,13 +113,6 @@ cameraTransform(const Camera & cam) {
         }
         newPositions.push_back(map);
     }
-    for (const auto & map: newPositions) {
-        for (const auto & pair: map) {
-            std::cout << pair.first << " ";
-            printVec3(pair.second);
-        }
-        std::cout << std::endl;
-    }
     return newPositions;
 }
 
@@ -128,15 +121,6 @@ perspectiveTransform(const Camera & cam,
                      std::vector<std::unordered_map<int, tinymath::vec3>> & relPositions) { 
     
     std::cout << "Started Perspective Transform" << std::endl;
-    for (const auto & map: relPositions) {
-        for (const auto & pair: map) {
-            std::cout << pair.first << " ";
-            printVec3(pair.second);
-        }
-        std::cout << std::endl;
-    }
-    
-    std::cout << std::endl;
 
     double n = cam.n,
            f = cam.f,
@@ -160,14 +144,6 @@ perspectiveTransform(const Camera & cam,
         }
     }
     
-    for (const auto & map: relPositions) {
-        for (const auto & pair: map) {
-            std::cout << pair.first << " ";
-            printVec3(pair.second);
-        }
-        std::cout << std::endl;
-    }
-
     return relPositions;
 }
 
@@ -237,13 +213,6 @@ void viewportTransform(const Camera & cam,
     
     int nx = cam.sizeX; 
     int ny = cam.sizeY; 
-    for (const auto & map: newPositions) {
-        for (const auto & pair: map) {
-            std::cout << pair.first << " ";
-            printVec3(pair.second);
-        }
-        std::cout << std::endl;
-    }
     
     for (const auto & model: models) {
 
@@ -252,10 +221,6 @@ void viewportTransform(const Camera & cam,
             tinymath::vec3 v0 = newPositions[model.modelId-1][triangle.vertexIds[0]];
             tinymath::vec3 v1 = newPositions[model.modelId-1][triangle.vertexIds[1]];
             tinymath::vec3 v2 = newPositions[model.modelId-1][triangle.vertexIds[2]];
-            
-            printVec3(v0);
-            printVec3(v1);
-            printVec3(v2);
 
             tinymath::vec3 normal = calculateNormal(v0,v1,v2);
 
