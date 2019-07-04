@@ -325,7 +325,7 @@ int main(int argc, char **argv) {
         
         if (image) {
             for (int j = 0; j < nx; j++) {
-                delete image[j];
+                delete[] image[j];
             }
             delete[] image;
         }
